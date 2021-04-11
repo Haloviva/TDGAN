@@ -44,20 +44,11 @@ def processor():
 
         train_sentdata, train_table_ids, train_table_data = read_dataset(args.data, 'train')
 
-        if args.edge:
-            table_graph_dataset_train = TableGraphDataset(args.data, 'train', train_table_data, train_table_ids)
-            table_graph_dataset_train.read_num_type()
-            table_graph_train, remove_file_train = table_graph_dataset_train.table_graph()
-            tabfact_dataset_train = TabFactDataset(train_sentdata, table_graph_train, remove_file_train)
+        #tabfact_dataset_train = TabFactDataset_with_no_edge_weight(train_sentdata, train_table_data)
+        tabfact_dataset_train = EmbeddingDataset(args.data, 'train', train_table_data["table"])
+        train_sampler = torch.utils.data.distributed.DistributedSampler(tabfact_dataset_train) 
         
-            TabFactDataLoader_train = torch_DataLoader(tabfact_dataset_train, batch_size = args.batch, shuffle =True, collate_fn = lambda x:x)
-        else:
-
-            #tabfact_dataset_train = TabFactDataset_with_no_edge_weight(train_sentdata, train_table_data)
-            tabfact_dataset_train = EmbeddingDataset(args.data, 'train', train_table_data["table"])
-            train_sampler = torch.utils.data.distributed.DistributedSampler(tabfact_dataset_train) 
-            
-            TabFactDataLoader_train = torch_DataLoader(tabfact_dataset_train, batch_size = args.batch, shuffle = True, collate_fn = lambda x:x)
+        TabFactDataLoader_train = torch_DataLoader(tabfact_dataset_train, batch_size = args.batch, shuffle = True, collate_fn = lambda x:x)
 
         
         #---------------------- Model definition ----------------------------------------
@@ -65,7 +56,6 @@ def processor():
 
         model = TDGAN(args.dim, args.dim)
         model.to(device)
-        model = DDP(model, device_ids=[args.local_rank], find_unused_parameters = True)
 
         # --------------------- Preparation for training --------------------------------
         criterion = nn.CrossEntropyLoss()
@@ -108,26 +98,12 @@ def processor():
         print("\t* Loading example data...")
 
         example_sentdata, example_table_ids, example_table_data = read_dataset(args.data, 'example') 
-        
-        if args.edge:
-            #带边图
-            '''
-            table_graph_dataset_example = TableGraphDataset(args.data, 'example', example_table_data, example_table_ids)
-            table_graph_dataset_example.read_num_type()
-            table_graph_example, remove_file_example = table_graph_dataset_example.table_graph()
-            tabfact_dataset_example = TabFactDataset(example_sentdata, table_graph_example, remove_file_example)
-            
-            TabFactDataLoader_example = torch_DataLoader(tabfact_dataset_example, batch_size = args.batch, shuffle =True, collate_fn = lambda x:x)
-            '''
-            EmbeddingDataLoader_example = EmbeddingDataset(args.data, 'example')
-            TabFactDataLoader_example = torch_DataLoader(EmbeddingDataLoader_example, batch_size = args.batch, shuffle =True, collate_fn = lambda x:x)
-        else:
-            '''
-            tabfact_dataset_example = TabFactDataset_with_no_edge_weight(example_sentdata, example_table_data)
-            TabFactDataLoader_example = torch_DataLoader(tabfact_dataset_example, batch_size = args.batch, shuffle = True, collate_fn = lambda x:x)
-            '''
-            EmbeddingDataLoader_example = EmbeddingDataset(args.data, 'example')
-            TabFactDataLoader_example = torch_DataLoader(EmbeddingDataLoader_example, batch_size = args.batch, shuffle = True, collate_fn = lambda x:x)
+        '''
+        tabfact_dataset_example = TabFactDataset_with_no_edge_weight(example_sentdata, example_table_data)
+        TabFactDataLoader_example = torch_DataLoader(tabfact_dataset_example, batch_size = args.batch, shuffle = True, collate_fn = lambda x:x)
+        '''
+        EmbeddingDataLoader_example = EmbeddingDataset(args.data, 'example')
+        TabFactDataLoader_example = torch_DataLoader(EmbeddingDataLoader_example, batch_size = args.batch, shuffle = True, collate_fn = lambda x:x)
             
 
         #---------------------- Model definition ----------------------------------------
