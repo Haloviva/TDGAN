@@ -58,8 +58,6 @@ def train(model,
         dataloader,
         optimizer,
         criterion):
-    """
-    """
     args = parse_opt()
     model.train()
 
@@ -89,10 +87,6 @@ def train(model,
         labels = torch.tensor(labels).to(device)
         support_out = torch.cat(supports, dim = 0).to(device)
         statement_out = torch.cat(statements, dim = 0).to(device)
-        
-        #support_out, statement_out, support_mask, statement_mask = sentencoded(supports, statements)
-        support_out.to(device)
-        statement_out.to(device)
         
 
         table_datas = form_graph_with_no_edge_weight(tables, columns)
@@ -209,37 +203,12 @@ def test(model, dataloader):
     return batch_time, total_time, accuracy
 
 
-def sentencoded(support, statement):
-    """
-    对support，statement编码
-    """
-    print("===============doing sentence encode ...==============")
-    args = parse_opt()
-    model_type = "bert-base-uncased"
-    tokenizer = BertTokenizer.from_pretrained(model_type)
-    supports_token = tokenizer(support, padding = 'max_length', truncation = True, max_length = args.max_len, return_tensors = "pt")
-    statements_token = tokenizer(statement, padding = 'max_length', truncation = True, max_length = args.max_len, return_tensors = "pt")
-
-    supports_mask = supports_token.attention_mask
-    statements_mask = statements_token.attention_mask
-
-    supports_token.to(device)
-    statements_token.to(device)
-
-    model = BertModel.from_pretrained(model_type)
-    model.to(device)
-    supports_outputs = model(**supports_token)    
-    statements_outputs = model(**statements_token)
-
-    return supports_outputs.last_hidden_state, statements_outputs.last_hidden_state, supports_mask, statements_mask
-
 def form_graph_with_no_edge_weight(tables, cols):
     args = parse_opt()
     model_type = 'bert-base-uncased'
     tokenizer = BertTokenizer.from_pretrained(model_type)
     model = BertModel.from_pretrained(model_type)
     model.to(device)
-    model = DDP(model, device_ids=[args.local_rank], find_unused_parameters = True)
 
     data = []
     batch_size = len(tables)

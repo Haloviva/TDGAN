@@ -44,9 +44,7 @@ def processor():
 
         train_sentdata, train_table_ids, train_table_data = read_dataset(args.data, 'train')
 
-        #tabfact_dataset_train = TabFactDataset_with_no_edge_weight(train_sentdata, train_table_data)
         tabfact_dataset_train = EmbeddingDataset(args.data, 'train', train_table_data["table"])
-        train_sampler = torch.utils.data.distributed.DistributedSampler(tabfact_dataset_train) 
         
         TabFactDataLoader_train = torch_DataLoader(tabfact_dataset_train, batch_size = args.batch, shuffle = True, collate_fn = lambda x:x)
 
@@ -98,10 +96,6 @@ def processor():
         print("\t* Loading example data...")
 
         example_sentdata, example_table_ids, example_table_data = read_dataset(args.data, 'example') 
-        '''
-        tabfact_dataset_example = TabFactDataset_with_no_edge_weight(example_sentdata, example_table_data)
-        TabFactDataLoader_example = torch_DataLoader(tabfact_dataset_example, batch_size = args.batch, shuffle = True, collate_fn = lambda x:x)
-        '''
         EmbeddingDataLoader_example = EmbeddingDataset(args.data, 'example')
         TabFactDataLoader_example = torch_DataLoader(EmbeddingDataLoader_example, batch_size = args.batch, shuffle = True, collate_fn = lambda x:x)
             
